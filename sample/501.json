@@ -1,0 +1,98 @@
+{
+  "AIL" : {
+    "UNKNOWN_3" : {
+      "Comp1" : "2",
+      "Comp2" : "Brockton"
+    },
+    "UNKNOWN_9" : "10",
+    "UNKNOWN_10" : "minutes",
+    "UNKNOWN_6" : "200403221540",
+    "UNKNOWN_12" : "\u001C"
+  },
+  "MSH" : {
+    "Sending_facility" : {
+      "Comp1" : "235",
+      "Comp2" : "TESTPRACTIVE"
+    },
+    "Encoding_characters" : "\\S\\\\R\\\\E\\\\T\\",
+    "Processing_ID" : "T",
+    "Date_Time_of_message" : "200403220359",
+    "Version_ID" : "2.2",
+    "Receiving_application" : "ATHENA",
+    "Sending_application" : "ATHENANET",
+    "Message_type" : {
+      "Comp1" : "SIU",
+      "Comp2" : "S12"
+    },
+    "Field_separator" : "\\F\\",
+    "Message_Control_ID" : "501"
+  },
+  "SCH" : {
+    "UNKNOWN_9" : "10",
+    "UNKNOWN_10" : "minutes",
+    "UNKNOWN_11" : {
+      "Comp1" : "",
+      "Comp2" : "",
+      "Comp3" : "",
+      "Comp4" : "200403221540"
+    },
+    "UNKNOWN_8" : {
+      "Comp1" : "ov",
+      "Comp2" : "office visit"
+    },
+    "UNKNOWN_7" : "office visit",
+    "UNKNOWN_16" : "emorales",
+    "UNKNOWN_1" : "347606",
+    "UNKNOWN_6" : "office visit",
+    "UNKNOWN_2" : "347606"
+  },
+  "AIG" : {
+    "UNKNOWN_3" : "medickinson2",
+    "UNKNOWN_8" : "200403221540",
+    "UNKNOWN_11" : "10",
+    "UNKNOWN_12" : "minutes"
+  },
+  "RGS" : { },
+  "PID" : {
+    "Patient_ID_External_ID" : "70690",
+    "Phone_Number_Business" : "(848)165-6315",
+    "Marital_Status" : "S",
+    "Date_of_Birth" : "19971006",
+    "Patient_Address" : {
+      "Street_address" : "5255 Skug",
+      "Other_designation" : "",
+      "City" : "NEW BRIT",
+      "Zip" : "06051",
+      "State" : "CT"
+    },
+    "Patient_Name" : {
+      "Family_name" : "HALL",
+      "Given_name" : "ROSCOE"
+    },
+    "Patient_ID_Internal_ID" : "70690",
+    "Phone_Number_Home" : "(974)575-7194",
+    "Social_security_number_patient" : "999144488",
+    "Sex" : "M"
+  },
+  "PV1" : {
+    "Assigned_Patient_Location" : {
+      "Comp1" : "",
+      "Comp2" : "",
+      "Comp3" : "",
+      "Comp4" : "Brockton"
+    },
+    "Attending_Doctor" : {
+      "Comp1" : "22",
+      "Comp2" : "medickinson2"
+    },
+    "Admitting_Doctor" : {
+      "Comp1" : "22",
+      "Comp2" : "medickinson2"
+    }
+  },
+  "DG1" : {
+    "Diagnosis_coding_method" : "ICD9",
+    "Diagnosis_code" : "49390",
+    "Diagnosis_description" : "ASTHCT, UNSPECIFIED TYPE, WITHOUT MENTION OF STATUS ASTHCTTICUS  ASTHCT (BRONCHIAL) (ALLERGIC NOS); BRONCHITIS: ALLERGIC, ASTHCTTIC"
+  }
+}
