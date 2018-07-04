@@ -2,6 +2,11 @@
 
 Converts HL7 v2 to JSON with Spark usage example.
 
+## Requirements:
+* Maven 3.5.0
+* Scala 2.11.8
+* Spark 2.3.0
+
 ## Build
 ```
 mvn package
@@ -21,7 +26,7 @@ scala -cp target/amm-hl7-json-spark-1.0-SNAPSHOT.jar \
 MSH|^~\&|ATHENANET|235^TESTPRACTIVE|ATHENA||200403220359||SIU^S12|501|T|2.2||||||||^MSCH|347606|347606||||office visit|office visit|ov^office visit|10|minutes|^^^200403221540|||||emorales|||||||||^MPID||70690|70690||HALL^ROSCOE^||19971006|M|||5255 Skug^^NEW BRIT^CT^06051||(974)575-7194|(848)165-6315||S|||999144488|||||||||||^MPV1|||^^^Brockton||||22^medickinson2||||||||||22^medickinson2|||||||||||||||||||||||||||||||||||^MDG1||ICD9|49390|ASTHCT, UNSPECIFIED TYPE, WITHOUT MENTION OF STATUS ASTHCTTICUS  ASTHCT (BRONCHIAL) (ALLERGIC NOS); BRONCHITIS: ALLERGIC, ASTHCTTIC|||||||||||||||^MRGS|||^MAIG|||medickinson2|||||200403221540|||10|minutes||^MAIL|||2^Brockton|||200403221540|||10|minutes||^\^M
 ```
 ### Output JSON
-[sample/501.json](sample/501.json)
+[samples/501.json](samples/501.json)
 ```
 {
   "AIL" : {
