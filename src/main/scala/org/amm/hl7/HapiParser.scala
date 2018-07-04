@@ -7,14 +7,14 @@ import ca.uhn.hl7v2.DefaultHapiContext
 import ca.uhn.hl7v2.parser.Parser
 
 class HapiParser(validate: Boolean, explodeFieldComponents: Boolean = true, replaceNames: Boolean = false) {
-  println(s"HapiParse: validate=$validate explodeFieldComponents=$explodeFieldComponents replaceNames=$replaceNames")
+  //println(s"HapiParse: validate=$validate explodeFieldComponents=$explodeFieldComponents replaceNames=$replaceNames")
   val context = new DefaultHapiContext()
   val parser = context.getGenericParser()
   context.getParserConfiguration().setValidating(validate);
 
   def parse(content: String) : Map[String,Any] = {
     val version = parser.getVersion(content)
-    println(s"HL7 Version=$version")
+    //println(s"HL7 Version=$version")
     val msg = parser.parse(content)
     val map = mutable.LinkedHashMap.empty[String, Any]
     walkGroup(map, msg)
