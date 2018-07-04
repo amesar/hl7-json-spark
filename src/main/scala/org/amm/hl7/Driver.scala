@@ -4,15 +4,9 @@ import scala.io.Source
 import org.amm.util.Utils
 
 object Driver {
-  //val logger = org.slf4j.LoggerFactory.getLogger(getClass.getName)
-  val logger = org.apache.log4j.Logger.getLogger(this.getClass())
-
   val replaceNames = true
   def main(args: Array[String]) {
     println(">> main: class="+getClass.getName)
-    logger.info(">> log.info")
-    logger.debug(">> log.debug")
-    logger.error(">> log.error")
     if (args.length < 1) {
       println("ERROR: Missing HL7_file validate replaceNames")
       System.exit(1)
