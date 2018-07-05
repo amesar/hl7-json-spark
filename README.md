@@ -1,11 +1,22 @@
-# Converts HL7 v2.3 to JSON with Spark usage
+# Converts HL7 v2.3 to JSON with SQL queries (Postgres, Spark)
 
-Translates HL7 v2.3 data into JSON which can then be loaded into a SQL engine such as Spark or Postgres and analyzed as SQL.
+Translates HL7 v2.3 data into JSON. 
 
-[HapiParser.scala](src/main/scala/org/amm/hl7/HapiParser.scala) uses the [HAPi](HAPI) package to parse HL7.
+The JSON can then be loaded into a SQL engine such as Spark or Postgres and analyzed with standard SQL queries.
 
 ## Overview
 
+### Implementations
+* Basic - converts a HL7 file to JSON
+* Postgres - converts HL7 files to JSON and loads them into Postgres as [jsonb](https://www.postgresql.org/docs/current/static/datatype-json.html) column
+* Spark - loads HL7 files into Spark as JSON
+
+### Core logic
+* Parse HL7 using [HAPI](https://hapifhir.github.io/hapi-hl7v2/) Java package.
+* Create a nested Scala Map[String,Any] representation of HL7 data.
+* Convert map to JSON with the venerable [Jackson](https://github.com/FasterXML/jackson) Java package. 
+
+See [org.amm.hl7.HapiParser.scala](src/main/scala/org/amm/hl7/HapiParser.scala) for details.
 
 ## Requirements:
 * Maven 3.5.0
@@ -102,7 +113,7 @@ for file in $files ; do
 ```
 
 #### Run queries
-For more queries, see below section XX.
+For more queries, see the section Queries.
 
 ```
 select data #>> '{DG1,Diagnosis_code}' as Diagnosis_code from siu;
@@ -123,8 +134,20 @@ spark-submit --class org.amm.hl7.SparkDriver --master local[2] \
 
 ### Output
 
+#### Describe table siu
+```
+AIG	struct<UNKNOWN_11:string,UNKNOWN_12:string,UNKNOWN_3:string,UNKNOWN_8:string>	NULL
+AIL	struct<UNKNOWN_10:string,UNKNOWN_12:string,UNKNOWN_3:struct<Comp1:string,Comp2:string>,UNKNOWN_6:string,UNKNOWN_9:string>	NULL
+DG1	struct<Diagnosis_code:string,Diagnosis_coding_method:string,Diagnosis_description:string>	NULL
+MSH	struct<Date_Time_of_message:string,Encoding_characters:string,Field_separator:string,Message_Control_ID:string,Message_type:struct<Comp1:string,Comp2:string>,Processing_ID:string,Receiving_application:string,Sending_application:string,Sending_facility:struct<Comp1:string,Comp2:string>,Version_ID:string>	NULL
+PID	struct<Date_of_Birth:string,Marital_Status:string,Patient_Address:struct<City:string,Other_designation:string,State:string,Street_address:string,Zip:string>,Patient_ID_External_ID:string,Patient_ID_Internal_ID:string,Patient_Name:struct<Family_name:string,Given_name:string,Middle_initial:string>,Phone_Number_Business:string,Phone_Number_Home:string,Sex:string,Social_security_number_patient:string>	NULL
+PV1	struct<Admitting_Doctor:struct<Comp1:string,Comp2:string>,Assigned_Patient_Location:struct<Comp1:string,Comp2:string,Comp3:string,Comp4:string>,Attending_Doctor:struct<Comp1:string,Comp2:string>>	NULL
+SCH	struct<UNKNOWN_1:string,UNKNOWN_10:string,UNKNOWN_11:struct<Comp1:string,Comp2:string,Comp3:string,Comp4:string>,UNKNOWN_16:string,UNKNOWN_2:string,UNKNOWN_6:string,UNKNOWN_7:string,UNKNOWN_8:struct<Comp1:string,Comp2:string>,UNKNOWN_9:string>	NULL
+```
+
 #### DataFrame Schema
-[samples/siu_schema.txt](samples/siu_schema.txt)
+
+df.printSchema: [samples/spark_siu_schema.txt](samples/spark_siu_schema.txt)
 ```
 root
  |-- AIG: struct (nullable = true)
@@ -208,8 +231,19 @@ root
  |    |-- UNKNOWN_9: string (nullable = true)
 ```
 
+#### Run queries
+For more queries, see the section Queries.
+
+```
+select DG1.Diagnosis_code from siu;
+```
+
+
 ## Queries
-Spark queries: [samples/siu_queries.sql](samples/siu_queries.sql).
+
+Queries:
+  * Postgres queries: [samples/postgres_siu_queries.sql](samples/postgres_siu_queries.sql).
+  * Spark queries: [samples/spark_siu_queries.sql](samples/spark_siu_queries.sql).
 
 ##### Count of diagnosis codes and descriptions
 ```
@@ -288,14 +322,18 @@ Result
 +-----+-----+--------------+----------------------------------------------------------------------------------------------------+
 |CT   |3    |V202          |ROUTINE INFANT OR CHILD HEALTH CHECK                                                                |
 |CT   |2    |8798          |OPEN WOUND OF OTHER AND UNSPECIFIED PARTS OF TRUNK, COMPLICATED                                     |
-|CT   |1    |null          |no current diagnosis                                                                                |
-|CT   |1    |07999         |UNSPECIFIED VIRAL INFECTION  VIRAL INFECTIONS NOS                                                   |
-|CT   |1    |5589          |OTHER AND UNSPECIFIED NONINFECTIOUS GASTROENTERITIS AND COLITIS  {COLITIS} {ENTERITIS} {GASTROENTERI|
+. . . 
+|MA   |8    |3829          |UNSPECIFIED OTITIS MEDIA  OTITIS MEDIA: NOS, ACUTE NOS, CHRONIC NOS                                 |
+|MA   |3    |37230         |CONJUNCTIVITIS, UNSPECIFIED                                                                         |
+|MA   |3    |4659          |ACUTE UPPER RESPIRATORY INFECTIONS OF UNSPECIFIED SITE  ACUTE URI NOS; UPPER RESPIRATORY INFECTION (|
+. . . 
+|RI   |2    |4659          |ACUTE UPPER RESPIRATORY INFECTIONS OF UNSPECIFIED SITE  ACUTE URI NOS; UPPER RESPIRATORY INFECTION (|
+|RI   |1    |490           |BRONCHITIS, NOT SPECIFIED AS ACUTE OR CHRONIC  BRONCHITIS NOS: CATARRHAL, WITH TRACHEITIS NOS; TRACH|
 . . . 
 ```
 
 
-##### Count of diagnosis codes and descriptions by state
+##### Show patient diagnoses
 ```
 Spark
 
