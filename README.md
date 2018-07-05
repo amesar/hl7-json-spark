@@ -1,11 +1,17 @@
-# Converts HL7 v2 to JSON with Spark usage
+# Converts HL7 v2.3 to JSON with Spark usage
 
-Converts HL7 v2 to JSON with Spark usage example.
+Translates HL7 v2.3 data into JSON which can then be loaded into a SQL engine such as Spark or Postgres and analyzed as SQL.
+
+[HapiParser.scala](src/main/scala/org/amm/hl7/HapiParser.scala) uses the [HAPi](HAPI) package to parse HL7.
+
+## Overview
+
 
 ## Requirements:
 * Maven 3.5.0
 * Scala 2.11.8
 * Spark 2.3.0
+* Postgres 
 
 ## Build
 ```
@@ -14,7 +20,10 @@ mvn package
 
 ## Run
 
-### Run stand-alone HL7 to JSON converter
+### Convert HL7 file into JSON
+
+[Driver.scala](src/main/scala/org/amm/hl7/Driver.scala) converts a HL7 files into JSON.
+
 ```
 scala -cp target/amm-hl7-json-spark-1.0-SNAPSHOT.jar \
   org.amm.hl7.Driver \
@@ -25,8 +34,16 @@ scala -cp target/amm-hl7-json-spark-1.0-SNAPSHOT.jar \
 ##### Input Hl7: 
 [data/athena/siu/501.hl7](data/athena/siu/501.hl7)
 ```
-MSH|^~\&|ATHENANET|235^TESTPRACTIVE|ATHENA||200403220359||SIU^S12|501|T|2.2||||||||^MSCH|347606|347606||||office visit|office visit|ov^office visit|10|minutes|^^^200403221540|||||emorales|||||||||^MPID||70690|70690||HALL^ROSCOE^||19971006|M|||5255 Skug^^NEW BRIT^CT^06051||(974)575-7194|(848)165-6315||S|||999144488|||||||||||^MPV1|||^^^Brockton||||22^medickinson2||||||||||22^medickinson2|||||||||||||||||||||||||||||||||||^MDG1||ICD9|49390|ASTHCT, UNSPECIFIED TYPE, WITHOUT MENTION OF STATUS ASTHCTTICUS  ASTHCT (BRONCHIAL) (ALLERGIC NOS); BRONCHITIS: ALLERGIC, ASTHCTTIC|||||||||||||||^MRGS|||^MAIG|||medickinson2|||||200403221540|||10|minutes||^MAIL|||2^Brockton|||200403221540|||10|minutes||^\^M
+MSH|^~\&|ATHENANET|235^TESTPRACTIVE|ATHENA||200403220359||SIU^S12|501|T|2.2||||||||
+SCH|347606|347606||||office visit|office visit|ov^office visit|10|minutes|^^^200403221540|||||emorales|||||||||
+PID||70690|70690||HALL^ROSCOE^||19971006|M|||5255 Skug^^NEW BRIT^CT^06051||(974)575-7194|(848)165-6315||S|||999144488|||||||||||
+PV1|||^^^Brockton||||22^medickinson2||||||||||22^medickinson2|||||||||||||||||||||||||||||||||||
+DG1||ICD9|49390|ASTHCT, UNSPECIFIED TYPE, WITHOUT MENTION OF STATUS ASTHCTTICUS  ASTHCT (BRONCHIAL) (ALLERGIC NOS); BRONCHITIS: ALLERGIC, ASTHCTTIC|||||||||||||||
+RGS|||
+AIG|||medickinson2|||||200403221540|||10|minutes||
+AIL|||2^Brockton|||200403221540|||10|minutes||
 ```
+
 #### Output JSON
 [samples/501.json](samples/501.json)
 ```
@@ -51,7 +68,50 @@ MSH|^~\&|ATHENANET|235^TESTPRACTIVE|ATHENA||200403220359||SIU^S12|501|T|2.2|||||
 . . .
 ```
 
-### Run Spark HL7 to JSON converter
+### Run Postgres SQL queries on JSON data
+
+#### Create the database and table
+
+```
+create database hl7;
+create table siu (data jsonb not null) ;
+```
+
+#### Convert HL7 files to JSON
+
+```
+mkdir -p out
+dir=data/athena/siu
+files=`ls $dir/*.hl7`
+for file in $files ; do
+  scala -cp target/amm-hl7-json-spark-1.0-SNAPSHOT.jar \
+    org.amm.hl7.Driver $dir/$file > out/$file.json
+done
+```
+
+#### Load JSON files into Postgres
+
+```
+files=`ls out/*.json`
+for file in $files ; do
+  echo "insert into siu values ('" > _tmp.sql
+  cat $file >> _tmp.sql
+  echo "');" >> _tmp.sql
+  psql -U MY_USER -f _tmp.sql hl7
+  done
+```
+
+#### Run queries
+For more queries, see below section XX.
+
+```
+select data #>> '{DG1,Diagnosis_code}' as Diagnosis_code from siu;
+```
+
+### Run Spark SQL queries on JSON data
+
+[SparkDriver.scala](src/main/scala/org/amm/hl7/SparkDriver.scala) converts a directory of HL7 files into JSON, and then executes some standard SQL queries on the JSON.
+
 ```
 spark-submit --class org.amm.hl7.SparkDriver --master local[2] \
  target/amm-hl7-json-spark-1.0-SNAPSHOT.jar \
@@ -63,7 +123,7 @@ spark-submit --class org.amm.hl7.SparkDriver --master local[2] \
 
 ### Output
 
-#### Schema
+#### DataFrame Schema
 [samples/siu_schema.txt](samples/siu_schema.txt)
 ```
 root
@@ -148,11 +208,30 @@ root
  |    |-- UNKNOWN_9: string (nullable = true)
 ```
 
-#### Queries
-[samples/siu_queries.sql](samples/siu_queries.sql)
+## Queries
+Spark queries: [samples/siu_queries.sql](samples/siu_queries.sql).
+
+##### Count of diagnosis codes and descriptions
 ```
-select count(*) as count,DG1.Diagnosis_code, substr(DG1.Diagnosis_description,0,100) as Diagnosis_description 
-from siu group by Diagnosis_code, Diagnosis_description order by count desc
+Spark
+
+select count(*) as count,
+  DG1.Diagnosis_code, 
+  DG1.Diagnosis_description as Diagnosis_description 
+from siu 
+  group by Diagnosis_code, Diagnosis_description 
+  order by count desc
+
+Postgres
+
+select count(*) as count,
+  data #>> '{DG1,Diagnosis_code}' as Diagnosis_code,
+  data #>> '{DG1,Diagnosis_description}' as Diagnosis_description
+from siu 
+  group by Diagnosis_code, Diagnosis_description 
+  order by count desc;
+
+Result
 
 +-----+--------------+----------------------------------------------------------------------------------------------------+
 |count|Diagnosis_code|Diagnosis_description                                                                               |
@@ -164,11 +243,45 @@ from siu group by Diagnosis_code, Diagnosis_description order by count desc
 |3    |8798          |OPEN WOUND OF OTHER AND UNSPECIFIED PARTS OF TRUNK, COMPLICATED                                     |
 |3    |46619         |ACUTE BRONCHIOLITIS DUE TO OTHER INFECTIOUS ORGANISMS  USE ADDITIONAL CODE TO IDENTIFY ORGANISM     |
 . . . 
+```
 
+##### Count of diagnosis codes and descriptions by state
 
-select PID.Patient_Address.State, count(*) as count,DG1.Diagnosis_code, 
-  substr(DG1.Diagnosis_description,0,100) as Diagnosis_description 
-from siu group by PID.Patient_Address.State,Diagnosis_code, Diagnosis_description order by state,count desc
+```
+Spark
+
+select 
+  PID.Patient_Address.State, 
+  count(*) as count,DG1.Diagnosis_code, 
+  DG1.Diagnosis_description as Diagnosis_description 
+from siu 
+  group by PID.Patient_Address.State,Diagnosis_code, Diagnosis_description 
+  order by state,count desc
+
+Postgres
+
+select
+  data #>> '{PID,Patient_Name,Family_name}' as Family_name,
+  data #>> '{PID,Patient_Name,Given_name}' as Given_name,
+  data #>> '{PID,Patient_Address,Zip}' as Zip,
+  data #>> '{PID,Patient_Address,State}' as State,
+  data #>> '{PID,Patient_Address,City}' as City,
+  data #>> '{PID,Patient_Address,Street_address}' as Street_address,
+  data #>> '{DG1,Diagnosis_code}' as Diagnosis_code,
+  data #>> '{DG1,Diagnosis_description}' as Diagnosis_description
+from siu 
+  order by State, City ;
+
+select
+  data #>> '{PID,Patient_Address,State}' as State,
+  count(*) as count,
+  data #>> '{DG1,Diagnosis_code}' as Diagnosis_code,
+  data #>> '{DG1,Diagnosis_description}' as Diagnosis_description
+from siu 
+  group by State,Diagnosis_code, Diagnosis_description 
+  order by State,count desc;
+
+Result
 
 +-----+-----+--------------+----------------------------------------------------------------------------------------------------+
 |State|count|Diagnosis_code|Diagnosis_description                                                                               |
@@ -179,14 +292,39 @@ from siu group by PID.Patient_Address.State,Diagnosis_code, Diagnosis_descriptio
 |CT   |1    |07999         |UNSPECIFIED VIRAL INFECTION  VIRAL INFECTIONS NOS                                                   |
 |CT   |1    |5589          |OTHER AND UNSPECIFIED NONINFECTIOUS GASTROENTERITIS AND COLITIS  {COLITIS} {ENTERITIS} {GASTROENTERI|
 . . . 
+```
 
 
-select PID.Patient_Name.Family_name, PID.Patient_Name.Given_name, 
+##### Count of diagnosis codes and descriptions by state
+```
+Spark
+
+select 
+  PID.Patient_Name.Family_name, 
+  PID.Patient_Name.Given_name, 
   PID.Patient_Address.Zip, 
-  PID.Patient_Address.State, PID.Patient_Address.City, 
+  PID.Patient_Address.State, 
+  PID.Patient_Address.City, 
   PID.Patient_Address.Street_address, 
-  DG1.Diagnosis_code, substr(DG1.Diagnosis_description,0,70) as Diagnosis_description 
+  DG1.Diagnosis_code, 
+  DG1.Diagnosis_description as Diagnosis_description 
 from siu order by State, City
+
+Postgres
+
+select
+  data #>> '{PID,Patient_Name,Family_name}' as Family_name,
+  data #>> '{PID,Patient_Name,Given_name}' as Given_name,
+  data #>> '{PID,Patient_Address,Zip}' as Zip,
+  data #>> '{PID,Patient_Address,State}' as State,
+  data #>> '{PID,Patient_Address,City}' as City,
+  data #>> '{PID,Patient_Address,Street_address}' as Street_address,
+  data #>> '{DG1,Diagnosis_code}' as Diagnosis_code,
+  data #>> '{DG1,Diagnosis_description}' as Diagnosis_description
+from siu 
+  order by State, City ;
+
+Result
 
 +-----------+----------+-----+-----+------------------------+---------------+--------------+----------------------------------------------------------------------+
 |Family_name|Given_name|Zip  |State|City                    |Street_address |Diagnosis_code|Diagnosis_description                                                 |
