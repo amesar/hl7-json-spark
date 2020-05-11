@@ -6,17 +6,19 @@ The JSON can then be loaded into a SQL engine such as Spark or Postgres and anal
 
 ## Overview
 
-### Implementations
-* Basic - converts a HL7 file to JSON
-* Postgres - converts HL7 files to JSON and loads them into Postgres as [jsonb](https://www.postgresql.org/docs/current/static/datatype-json.html) column
-* Spark - loads HL7 files into Spark as JSON
+### Use Cases
+* Basic - convert a HL7 file to JSON
+* Postgres - convert HL7 files to JSON and load into Postgres as [jsonb](https://www.postgresql.org/docs/current/static/datatype-json.html) column
+* Spark - load HL7 files into Spark as JSON
 
 ### Core logic
 * Parse HL7 using [HAPI](https://hapifhir.github.io/hapi-hl7v2/) Java package.
 * Create a nested Scala Map[String,Any] representation of HL7 data.
 * Convert map to JSON with the venerable [Jackson](https://github.com/FasterXML/jackson) Java package. 
 
-See [org.amm.hl7.HapiParser.scala](src/main/scala/org/amm/hl7/HapiParser.scala) for details.
+See [org.amm.hl7.HapiParser.scala](src/main/scala/org/amm/hl7/HapiParser.scala) for details. 
+This generic parser is only as good as the underlying Hapi parser, so your mileage may vary as HL7 data often does not strictly comply with the stanard.
+
 
 ## Requirements:
 * Maven 3.5.0
