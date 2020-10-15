@@ -5,8 +5,8 @@ import org.amm.util.Utils
 
 object SparkDriver {
   def main(args: Array[String]) {
-    if (args.length < 2) {
-      println("ERROR: Missing HL7_data_directory validate replaceNames")
+    if (args.length < 1) {
+      println("ERROR: Missing HL7_data_directory validate (optional) replaceNames (optional) ")
       System.exit(1)
     }
     val spark = SparkSession.builder().enableHiveSupport().appName("SparkHl7Driver").getOrCreate()
@@ -40,6 +40,9 @@ object SparkDriver {
   }
 
   def doQueries(spark: SparkSession, table: String) {
+    println("\nTABLE SCHEMA:\n")
+    doQuery(spark,"describe formatted tbl")
+
     println("\nQUERIES:\n")
 
     doQuery(spark,s"select count(*) as count,DG1.Diagnosis_code, substr(DG1.Diagnosis_description,0,100) as Diagnosis_description from $table group by Diagnosis_code, Diagnosis_description order by count desc")
