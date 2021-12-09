@@ -8,7 +8,7 @@
 
   <properties>
     <hapi.version>2.3</hapi.version>
-    <faster.xml.version>2.9.5</faster.xml.version>
+    <faster.xml.version>2.9.10.8</faster.xml.version>
     <scala.version>2.11.8</scala.version>
     <spark.version>2.3.0</spark.version>
   </properties>
